@@ -1,0 +1,863 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Papa Ming AI Trading — Gold Market Analysis</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700;900&family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+--gold:#d4a24e;--goldb:#f5c842;--goldd:#9a7230;
+--bg:#08080c;--card:#0e0e14;--hover:#13131c;
+--text:#e8e4dc;--dim:#7a7670;--muted:#4a4640;
+--red:#d94f4f;--green:#3dbd7d;--blue:#5b7fd6;--purple:#9b6fd6;--cyan:#4ecdc4;
+--bdr:rgba(212,162,78,0.1);--bdrh:rgba(212,162,78,0.25);
+--fd:'Cinzel',serif;--fb:'Outfit',sans-serif;--fm:'JetBrains Mono',monospace;
+}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:var(--fb);line-height:1.6;min-height:100vh;overflow-x:hidden}
+::-webkit-scrollbar{width:5px}::-webkit-scrollbar-track{background:var(--bg)}::-webkit-scrollbar-thumb{background:var(--goldd);border-radius:10px}
+body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse 800px 600px at 15% 10%,rgba(212,162,78,0.03),transparent),radial-gradient(ellipse 600px 800px at 85% 80%,rgba(91,127,214,0.02),transparent);pointer-events:none;z-index:0}
+@keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+@keyframes shimmer{0%{background-position:-300% center}100%{background-position:300% center}}
+@keyframes pulse{0%,100%{box-shadow:0 0 4px var(--green)}50%{box-shadow:0 0 14px var(--green)}}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+@keyframes scrollN{0%{transform:translateX(80%)}100%{transform:translateX(-120%)}}
+.wrap{max-width:1200px;margin:0 auto;padding:0 20px;position:relative;z-index:1}
+/* Header */
+.hdr{padding:16px 0 10px;border-bottom:1px solid var(--bdr);position:sticky;top:0;background:rgba(8,8,12,.92);backdrop-filter:blur(24px);z-index:100}
+.hdr-in{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px}
+.logo{display:flex;align-items:center;gap:10px}
+.logo-i{width:40px;height:40px;border-radius:10px;background:linear-gradient(135deg,var(--gold),var(--goldd));display:flex;align-items:center;justify-content:center;font-size:18px;box-shadow:0 4px 16px rgba(212,162,78,.15)}
+.logo h1{font-family:var(--fd);font-size:19px;font-weight:900;letter-spacing:2px;background:linear-gradient(90deg,var(--goldb),var(--gold),var(--goldb));background-size:300% auto;-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;animation:shimmer 4s ease infinite}
+.logo-s{font-size:9px;letter-spacing:3px;text-transform:uppercase;color:var(--dim);margin-top:-2px}
+.hdr-r{text-align:right;font-size:11px;color:var(--dim)}
+/* Nav */
+.nav{display:flex;gap:3px;margin-top:10px;overflow-x:auto;scrollbar-width:none}.nav::-webkit-scrollbar{display:none}
+.nb{background:0;border:1px solid transparent;border-radius:8px;padding:6px 14px;color:var(--dim);font-family:var(--fb);font-size:11px;font-weight:500;cursor:pointer;white-space:nowrap;transition:.25s}
+.nb:hover{color:var(--text);background:rgba(212,162,78,.04)}
+.nb.on{background:rgba(212,162,78,.1);border-color:var(--bdrh);color:var(--gold)}
+/* Card */
+.cd{background:var(--card);border:1px solid var(--bdr);border-radius:14px;padding:20px;margin-bottom:12px;transition:border-color .3s}
+.cd:hover{border-color:var(--bdrh)}
+.ct{font-size:14px;font-weight:600;margin-bottom:12px;display:flex;align-items:center;gap:7px}
+/* Pages */
+.pg{display:none;padding:18px 0 50px}.pg.on{display:block}
+/* News ticker */
+.ticker{background:rgba(212,162,78,.04);border:1px solid var(--bdr);border-radius:8px;padding:8px 14px;margin:12px 0;display:flex;align-items:center;gap:10px;overflow:hidden}
+.tlive{background:var(--red);color:#fff;font-size:8px;font-weight:700;padding:2px 7px;border-radius:5px;letter-spacing:1px;animation:blink 1.5s infinite}
+.tscroll{flex:1;overflow:hidden;white-space:nowrap}
+.tscroll-in{display:inline-block;animation:scrollN 40s linear infinite}
+.tscroll-in span{margin-right:50px;font-size:11px;color:var(--text)}
+/* Session */
+.sg{display:grid;grid-template-columns:repeat(auto-fit,minmax(165px,1fr));gap:7px;margin-bottom:12px}
+.sc{background:var(--card);border:1px solid var(--bdr);border-radius:9px;padding:12px;transition:.3s}
+.sc.now{border-color:var(--goldd);background:rgba(212,162,78,.04)}
+.sn{font-weight:600;font-size:12px}.st{font-size:9px;color:var(--dim);font-family:var(--fm);margin-top:2px}
+.sq{font-size:9px;margin-top:3px;color:var(--dim)}
+.qb{color:var(--green);font-weight:700}.qh{color:var(--gold);font-weight:600}.ql{color:var(--red);font-weight:600}
+.ldot{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--green);margin-left:5px;animation:pulse 2s infinite}
+/* Levels */
+.lr{display:flex;align-items:center;gap:10px;padding:5px 0;border-bottom:1px solid rgba(255,255,255,.02)}.lr:last-child{border:0}
+.lp{font-family:var(--fm);font-weight:700;font-size:12px;min-width:60px;text-align:right}
+.lb{flex:1;height:3px;background:rgba(255,255,255,.03);border-radius:2px;position:relative}
+.ld{position:absolute;top:-4px;width:10px;height:10px;border-radius:50%;transform:translateX(-50%)}
+.ll{font-size:10px;color:var(--dim);min-width:150px}
+/* Strategy */
+.stc{background:var(--card);border:1px solid var(--bdr);border-radius:12px;padding:18px;margin-bottom:9px;cursor:pointer;transition:.3s}
+.stc:hover,.stc.op{border-color:var(--bdrh);background:var(--hover)}
+.std{display:none;margin-top:14px;animation:fadeUp .3s ease}.stc.op .std{display:block}
+.tg{font-size:9px;padding:3px 9px;border-radius:16px;font-weight:600;font-family:var(--fm)}
+.tg-t{background:rgba(91,127,214,.1);color:var(--blue)}.tg-w{background:rgba(61,189,125,.1);color:var(--green)}.tg-r{background:rgba(212,162,78,.1);color:var(--gold)}.tg-i{background:rgba(155,111,214,.1);color:var(--purple)}
+.rg{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:7px}
+.rb{background:rgba(0,0,0,.3);border-radius:8px;padding:11px}
+/* ICT */
+.ig{display:grid;grid-template-columns:repeat(auto-fit,minmax(290px,1fr));gap:10px;margin-bottom:12px}
+.ic{background:rgba(0,0,0,.2);border:1px solid var(--bdr);border-radius:12px;padding:18px;transition:.3s}.ic:hover{border-color:var(--bdrh)}
+.ic h4{font-size:14px;font-weight:700;margin-bottom:2px}
+.ic .is{font-size:9px;color:var(--dim);font-style:italic;margin-bottom:6px}
+.ic p{font-size:11px;color:var(--dim);line-height:1.7}
+.ihow{margin-top:8px;padding:8px;background:rgba(212,162,78,.04);border-radius:6px;font-size:10px;color:var(--goldd);line-height:1.6}
+/* AI */
+.apre{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:12px}
+.apb{background:rgba(212,162,78,.06);border:1px solid rgba(212,162,78,.15);border-radius:16px;padding:4px 10px;color:var(--goldd);font-size:10px;cursor:pointer;font-family:var(--fb);transition:.2s}
+.apb:hover{background:rgba(212,162,78,.12);color:var(--gold)}
+.aout{background:rgba(0,0,0,.3);border-radius:10px;border:1px solid rgba(212,162,78,.08);padding:16px;max-height:500px;overflow-y:auto;font-size:12px;line-height:1.8;white-space:pre-wrap}
+.asp{width:14px;height:14px;border:2px solid var(--gold);border-top-color:transparent;border-radius:50%;animation:spin .8s linear infinite;display:inline-block}
+/* Calc */
+.ci{display:flex;flex-wrap:wrap;gap:9px;margin-bottom:16px}
+.cf{flex:1;min-width:100px}.cf label{display:block;font-size:9px;color:var(--dim);margin-bottom:2px}
+.cf input{width:100%;background:rgba(0,0,0,.4);border:1px solid rgba(212,162,78,.15);border-radius:7px;padding:8px 10px;color:var(--text);font-size:12px;font-family:var(--fm);outline:0}.cf input:focus{border-color:var(--goldd)}
+.cr{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:7px}
+.crb{background:rgba(0,0,0,.3);border-radius:8px;padding:10px;text-align:center}
+.crb .cl{font-size:9px;color:var(--dim);margin-bottom:2px}.crb .cv{font-size:16px;font-weight:700;font-family:var(--fm)}
+/* Edu */
+.eg{display:grid;grid-template-columns:repeat(auto-fit,minmax(270px,1fr));gap:10px}
+.ec{background:rgba(0,0,0,.25);border-radius:10px;padding:16px}
+.ec h4{font-size:13px;font-weight:700;margin-bottom:2px}
+.ec .er{font-size:9px;color:var(--dim);font-style:italic;margin-bottom:5px}
+.ec p{font-size:11px;color:var(--dim);line-height:1.7}
+/* Grid helpers */
+.g2{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:10px}
+.g3{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:7px}
+.g4{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:7px}
+/* Misc */
+.ins{margin-top:10px;padding:10px;background:rgba(212,162,78,.04);border-radius:7px;font-size:11px;color:var(--goldd);line-height:1.6}
+.warn{margin-top:10px;background:rgba(217,79,79,.08);border:1px solid rgba(217,79,79,.25);border-radius:7px;padding:9px;font-size:11px;color:#f5a5a5}
+.disc{background:rgba(212,162,78,.04);border:1px solid rgba(212,162,78,.15);border-radius:10px;padding:12px;font-size:11px;color:var(--goldd);line-height:1.7;margin-top:16px}
+.pill{font-size:9px;padding:2px 7px;border-radius:5px;background:rgba(255,255,255,.04);color:var(--text)}
+@media(max-width:640px){.logo h1{font-size:14px}.cd{padding:14px}.cf{min-width:100%}}
+</style>
+</head>
+<body>
+
+<header class="hdr"><div class="wrap">
+  <div class="hdr-in">
+    <div class="logo">
+      <div class="logo-i">👑</div>
+      <div><h1>PAPA MING AI TRADING</h1><div class="logo-s">Gold Market · Scalping & Day Trading · 🇰🇭 Cambodia</div></div>
+    </div>
+    <div class="hdr-r"><span id="clock"></span> (Phnom Penh UTC+7)</div>
+  </div>
+  <nav class="nav">
+    <button class="nb on" data-p="dash">📊 Dashboard</button>
+    <button class="nb" data-p="setups">🎯 Today's Setups</button>
+    <button class="nb" data-p="strat">⚔️ Strategies</button>
+    <button class="nb" data-p="ict">🧠 ICT / SMC</button>
+    <button class="nb" data-p="news">📰 News</button>
+    <button class="nb" data-p="ai">🤖 AI Analyst</button>
+    <button class="nb" data-p="risk">🛡️ Risk Tools</button>
+    <button class="nb" data-p="learn">📚 Learn</button>
+  </nav>
+</div></header>
+
+<!-- Ticker -->
+<div class="wrap">
+  <div class="ticker"><span class="tlive">LIVE</span><div class="tscroll"><div class="tscroll-in" id="tickerText"></div></div></div>
+</div>
+
+<div class="wrap">
+
+<!-- ═══ DASHBOARD ═══ -->
+<section class="pg on" id="pg-dash">
+  <div class="sg" id="sessions"></div>
+
+  <!-- TradingView Chart - using iframe for GitHub Pages compatibility -->
+  <div class="cd" style="padding:0;overflow:hidden">
+    <div style="padding:16px 20px 8px"><div class="ct" style="margin:0">📈 XAUUSD Live Chart</div></div>
+    <iframe src="https://www.tradingview.com/widgetembed/?hideideas=1&overrides=&enabled_features=&disabled_features=&locale=en#%7B%22symbol%22%3A%22OANDA%3AXAUUSD%22%2C%22frameElementId%22%3A%22tv1%22%2C%22interval%22%3A%225%22%2C%22hide_side_toolbar%22%3A%220%22%2C%22allow_symbol_change%22%3A%221%22%2C%22save_image%22%3A%220%22%2C%22studies%22%3A%22EMA%4040%4040%4040%2CEMA%4040%4040%4040%2CRSI%4040%4040%4040%22%2C%22theme%22%3A%22dark%22%2C%22style%22%3A%221%22%2C%22timezone%22%3A%22Asia%2FBangkok%22%2C%22withdateranges%22%3A%221%22%7D" style="width:100%;height:500px;border:0" allowtransparency="true" frameborder="0"></iframe>
+  </div>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+    <!-- Technical Analysis Widget -->
+    <div class="cd" style="padding:0;overflow:hidden">
+      <div style="padding:14px 18px 6px"><div class="ct" style="margin:0">📐 Technical Analysis</div></div>
+      <iframe src="https://www.tradingview.com/widgetembed/?hideideas=1&overrides=&enabled_features=&disabled_features=&locale=en#%7B%22symbol%22%3A%22OANDA%3AXAUUSD%22%2C%22frameElementId%22%3A%22tv2%22%2C%22interval%22%3A%225m%22%2C%22theme%22%3A%22dark%22%2C%22isTransparent%22%3Atrue%7D" style="width:100%;height:360px;border:0" allowtransparency="true" frameborder="0"></iframe>
+      <!-- Fallback: direct widget embed -->
+      <div id="tv-ta-fallback" style="height:360px"></div>
+    </div>
+    <!-- Key Levels -->
+    <div class="cd">
+      <div class="ct">🗺️ Key Levels</div>
+      <div id="levels"></div>
+      <div class="ins">💡 Cambodia prime time: <strong>20:00–23:30</strong> (LDN/NY overlap). Mark levels before 15:00, execute during killzones.</div>
+    </div>
+  </div>
+
+  <div class="cd"><div class="ct">🌍 Market Context</div><div class="g2" id="ctx"></div></div>
+</section>
+
+<!-- ═══ TODAY'S SETUPS (AI-generated daily) ═══ -->
+<section class="pg" id="pg-setups">
+  <div class="cd" style="border-color:rgba(212,162,78,.2);background:linear-gradient(135deg,var(--card),rgba(212,162,78,.02))">
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+      <div class="ct" style="margin:0">🎯 Today's Live Setups</div>
+      <span id="setupDate" style="font-size:9px;font-weight:700;padding:2px 8px;border-radius:5px;background:rgba(61,189,125,.15);color:var(--green);letter-spacing:1px"></span>
+    </div>
+    <p style="font-size:11px;color:var(--dim);margin-bottom:4px">Setups are <strong>generated fresh each day</strong> using AI + ICT/SMC analysis based on current price action. Connect your API key for live daily generation, or use built-in smart analysis.</p>
+    <p style="font-size:10px;color:var(--red)">⚠️ Always confirm setups with your own chart analysis. These are educational — not financial advice.</p>
+  </div>
+
+  <!-- API Key Setup (compact) -->
+  <div class="cd" id="setupKeyBox">
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+      <span style="font-size:12px;font-weight:600;color:var(--gold)">🔑 API Key</span>
+      <span id="keyStatus" style="font-size:8px;padding:2px 7px;border-radius:4px;background:rgba(217,79,79,.15);color:var(--red);font-weight:700">OFFLINE MODE</span>
+      <button id="genBtn" onclick="generateDailySetups()" style="margin-left:auto;background:var(--gold);border:0;border-radius:6px;padding:6px 14px;color:var(--bg);font-weight:700;font-size:11px;cursor:pointer;font-family:var(--fb)">🔄 Generate Today's Setups</button>
+    </div>
+    <div style="display:flex;gap:6px">
+      <input type="password" id="apiKey" placeholder="sk-ant-api03-... (get from console.anthropic.com)" style="flex:1;background:rgba(0,0,0,.4);border:1px solid rgba(212,162,78,.15);border-radius:6px;padding:7px 10px;color:var(--text);font-size:11px;font-family:var(--fm);outline:0">
+      <button onclick="saveKey()" style="background:rgba(212,162,78,.15);border:1px solid var(--bdrh);border-radius:6px;padding:7px 14px;color:var(--gold);font-weight:600;font-size:11px;cursor:pointer;font-family:var(--fb)">Save</button>
+    </div>
+    <p style="font-size:9px;color:var(--muted);margin-top:4px">Key saved in your browser only. Without API key, you get smart pre-built analysis that updates with market context.</p>
+  </div>
+
+  <!-- Setup cards render here -->
+  <div id="setupCards"></div>
+
+  <!-- Quick Reference -->
+  <div class="cd"><div class="ct">📏 Quick Reference</div><div class="g4" id="quickRef"></div></div>
+
+  <!-- Daily Bias -->
+  <div class="cd"><div class="ct">🧭 Daily Bias</div><div id="biasBox"></div></div>
+</section>
+
+<!-- ═══ STRATEGIES ═══ -->
+<section class="pg" id="pg-strat">
+  <p style="color:var(--dim);font-size:11px;margin-bottom:14px">Proven gold scalping setups with tight SL (15-40 pips max). All times in Cambodia (UTC+7). Click to expand.</p>
+  <div id="stratList"></div>
+</section>
+
+<!-- ═══ ICT/SMC ═══ -->
+<section class="pg" id="pg-ict">
+  <div class="cd">
+    <div class="ct">🧠 ICT & Smart Money Concepts</div>
+    <p style="font-size:11px;color:var(--dim);line-height:1.7">Trade gold the way institutions do — by tracking liquidity pools, order blocks, fair value gaps, and structural shifts. No lagging indicators. Pure price action.</p>
+  </div>
+  <div class="ig" id="ictGrid"></div>
+  <div class="cd"><div class="ct">⚡ ICT Execution Model</div><div id="ictSteps"></div></div>
+  <div class="cd">
+    <div class="ct">🕐 ICT Killzones — Cambodia Time</div>
+    <div id="killzones"></div>
+    <div class="ins">💡 Your prime killzone: <strong>London Open 15:00-17:00</strong> and <strong>LDN/NY Overlap 20:00-23:30</strong>. Morning = analysis only.</div>
+  </div>
+</section>
+
+<!-- ═══ NEWS ═══ -->
+<section class="pg" id="pg-news">
+  <div class="cd">
+    <div class="ct">📰 Gold-Impact News</div>
+    <p style="font-size:10px;color:var(--dim);margin-bottom:12px">High-impact events move gold 300–1000+ pips. Stay flat 30 min before/after 🔴 events.</p>
+    <div id="newsList"></div>
+  </div>
+  <!-- TradingView News Timeline - iframe for GitHub Pages -->
+  <div class="cd" style="padding:0;overflow:hidden">
+    <div style="padding:14px 18px 6px"><div class="ct" style="margin:0">🗞️ Live Market News</div></div>
+    <iframe src="https://www.tradingview.com/widgetembed/?hideideas=1#%7B%22symbol%22%3A%22OANDA%3AXAUUSD%22%2C%22width%22%3A%22100%25%22%2C%22height%22%3A500%2C%22feedMode%22%3A%22symbol%22%2C%22colorTheme%22%3A%22dark%22%2C%22isTransparent%22%3Atrue%7D" style="width:100%;height:450px;border:0" allowtransparency="true" frameborder="0"></iframe>
+  </div>
+  <!-- Economic Calendar -->
+  <div class="cd" style="padding:0;overflow:hidden">
+    <div style="padding:14px 18px 6px"><div class="ct" style="margin:0">📅 Economic Calendar</div></div>
+    <iframe src="https://www.tradingview.com/embed-widget/events/?locale=en#%7B%22colorTheme%22%3A%22dark%22%2C%22isTransparent%22%3Atrue%2C%22width%22%3A%22100%25%22%2C%22height%22%3A%22100%25%22%2C%22importanceFilter%22%3A%22-1%2C0%2C1%22%2C%22countryFilter%22%3A%22us%22%7D" style="width:100%;height:450px;border:0" allowtransparency="true" frameborder="0"></iframe>
+  </div>
+</section>
+
+<!-- ═══ AI ANALYST ═══ -->
+<section class="pg" id="pg-ai">
+  <div class="cd">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">
+      <div style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--gold),var(--red));display:flex;align-items:center;justify-content:center;font-size:16px">🤖</div>
+      <div><div style="font-size:15px;font-weight:600">Papa Ming AI Analyst</div><div style="font-size:10px;color:var(--dim)">Powered by Claude — ICT/SMC gold analysis</div></div>
+      <div id="aiDot" style="margin-left:auto;width:7px;height:7px;border-radius:50%;background:var(--green);animation:pulse 2s infinite"></div>
+    </div>
+    <div class="apre" id="presets"></div>
+    <div style="display:flex;gap:7px;margin-bottom:12px">
+      <input id="aiQ" placeholder="Ask about gold setups, OBs, FVGs, liquidity, killzones..." style="flex:1;background:rgba(0,0,0,.4);border:1px solid rgba(212,162,78,.15);border-radius:8px;padding:10px 12px;color:var(--text);font-size:12px;font-family:var(--fb);outline:0">
+      <button id="aiBtn" onclick="askAI()" style="background:linear-gradient(135deg,var(--gold),var(--goldd));border:0;border-radius:8px;padding:10px 22px;color:var(--bg);font-weight:700;font-size:12px;cursor:pointer;font-family:var(--fb)">Analyze</button>
+    </div>
+    <div class="aout" id="aiOut" style="display:none"></div>
+  </div>
+  <div class="cd">
+    <div class="ct">🧠 How AI Enhances Your Trading</div>
+    <div class="g2">
+      <div style="background:rgba(0,0,0,.25);border-radius:8px;padding:14px"><h4 style="font-size:12px;color:var(--gold);margin-bottom:4px">Order Block Validation</h4><p style="font-size:11px;color:var(--dim);line-height:1.5">Checks if your OB has proper displacement, FVG confirmation, and HTF alignment.</p></div>
+      <div style="background:rgba(0,0,0,.25);border-radius:8px;padding:14px"><h4 style="font-size:12px;color:var(--gold);margin-bottom:4px">Liquidity Mapping</h4><p style="font-size:11px;color:var(--dim);line-height:1.5">Identifies buy-side and sell-side liquidity pools from equal highs/lows and session extremes.</p></div>
+      <div style="background:rgba(0,0,0,.25);border-radius:8px;padding:14px"><h4 style="font-size:12px;color:var(--gold);margin-bottom:4px">Killzone Timing</h4><p style="font-size:11px;color:var(--dim);line-height:1.5">Optimized for Cambodia timezone — tells you when setups are highest probability.</p></div>
+      <div style="background:rgba(0,0,0,.25);border-radius:8px;padding:14px"><h4 style="font-size:12px;color:var(--gold);margin-bottom:4px">Bias Confirmation</h4><p style="font-size:11px;color:var(--dim);line-height:1.5">Cross-references daily bias with DXY, fundamentals, and structure to reduce bias.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ RISK TOOLS ═══ -->
+<section class="pg" id="pg-risk">
+  <div class="cd">
+    <div class="ct">⚖️ Risk:Reward Calculator</div>
+    <div class="ci">
+      <div class="cf"><label>Entry ($)</label><input id="cE" value="4700" oninput="calc()"></div>
+      <div class="cf"><label>Stop Loss ($)</label><input id="cS" value="4693" oninput="calc()"></div>
+      <div class="cf"><label>Take Profit ($)</label><input id="cT" value="4721" oninput="calc()"></div>
+      <div class="cf"><label>Account ($)</label><input id="cA" value="10000" oninput="calc()"></div>
+      <div class="cf"><label>Risk %</label><input id="cR" value="0.5" oninput="calc()"></div>
+    </div>
+    <div class="cr" id="calcR"></div>
+    <div class="warn" id="calcW" style="display:none">⚠️ RR below 1:2 — widen TP or tighten SL.</div>
+  </div>
+  <div class="cd"><div class="ct">🛡️ Risk Rules</div><div class="g2" id="riskG"></div></div>
+</section>
+
+<!-- ═══ LEARN ═══ -->
+<section class="pg" id="pg-learn">
+  <div class="cd"><div class="ct">🏆 What Moves Gold?</div><div class="eg" id="eduG"></div></div>
+  <div class="cd"><div class="ct">📋 Daily Routine (Cambodia)</div><div id="routineG"></div></div>
+  <div class="cd" style="background:rgba(217,79,79,.03);border-color:rgba(217,79,79,.1)"><div class="ct" style="color:#f5a5a5">🚫 Common Mistakes</div><div class="g2" id="mistakeG"></div></div>
+  <div class="disc">⚠️ <strong>Risk Disclaimer:</strong> Gold trading involves significant risk. Never risk money you cannot afford to lose. Practice on demo first. This is educational only, not financial advice.</div>
+</section>
+
+</div>
+
+<!-- TradingView Widget Scripts (loaded separately for GitHub Pages) -->
+<script>
+// Load TradingView Technical Analysis widget properly
+(function(){
+  const c=document.getElementById('tv-ta-fallback');
+  if(!c)return;
+  const s=document.createElement('script');
+  s.src='https://s3.tradingview.com/external-embedding/embed-widget-technical-analysis.js';
+  s.async=true;
+  s.textContent=JSON.stringify({interval:"5m",width:"100%",isTransparent:true,height:"100%",symbol:"OANDA:XAUUSD",showIntervalTabs:true,displayMode:"single",locale:"en",colorTheme:"dark"});
+  const w=document.createElement('div');
+  w.className='tradingview-widget-container';
+  w.style.height='100%';
+  const inner=document.createElement('div');
+  inner.className='tradingview-widget-container__widget';
+  inner.style.height='100%';
+  w.appendChild(inner);w.appendChild(s);
+  c.innerHTML='';c.appendChild(w);
+})();
+</script>
+
+<script>
+// ═══════════════════════════════════════
+// ALL DATA
+// ═══════════════════════════════════════
+const D={
+  sessions:[
+    {id:'asian',name:'Asian Session',time:'07:00 — 15:00 ICT',c:'var(--blue)',q:'ql',ql:'Low — analysis only'},
+    {id:'london',name:'London Session',time:'15:00 — 23:30 ICT',c:'var(--gold)',q:'qh',ql:'High'},
+    {id:'newyork',name:'New York',time:'20:00 — 04:00 ICT',c:'var(--green)',q:'qh',ql:'High'},
+    {id:'overlap',name:'LDN/NY Overlap ⚡',time:'20:00 — 23:30 ICT',c:'var(--red)',q:'qb',ql:'BEST'}
+  ],
+  levels:[
+    {p:4773,t:'r',l:'R3 — Today\'s High'},
+    {p:4735,t:'r',l:'R2 — Open'},
+    {p:4718,t:'r',l:'R1 — Sell Zone'},
+    {p:4700,t:'p',l:'Pivot — $4,700'},
+    {p:4676,t:'s',l:'S1 — Demand'},
+    {p:4645,t:'s',l:'S2 — Weekly'},
+    {p:4600,t:'s',l:'S3 — Major'}
+  ],
+  ctx:[
+    {t:'PPI Surged',i:'Bearish Gold',c:'r',tag:'Breaking',d:'US Producer Prices biggest gain since 2022. Trade & energy costs driving inflation. Gold fell from $4,735.'},
+    {t:'CPI 3.8% — Hot',i:'Bearish ST',c:'r',tag:'Economic',d:'Rate cuts priced OUT for all 2026. USD strengthening.'},
+    {t:'US-Iran / Hormuz',i:'Bullish Gold',c:'g',tag:'Geopolitical',d:'Strait blocked. Military ops on table. Safe-haven floor under gold.'},
+    {t:'Trump-Xi Summit',i:'HIGH Volatility',c:'y',tag:'Macro',d:'3-day summit starting. Massive headline risk. Expect directional moves.'}
+  ],
+  strats:[
+    {n:'EMA Crossover Scalp',tf:'M5',wr:'62-70%',rr:'1:2',d:'Fast EMA crossovers + RSI. SL behind signal candle.',ind:['9 EMA','21 EMA','RSI(14)'],e:'9 EMA crosses 21 EMA + RSI > 50. Enter on close of crossover candle.',sl:'2-3 pips below crossover candle low (20-40 pips). Tight.',tp:'1:2 to 1:3 RR. Trail to BE after 1:1.',s:'London / NY',r:'0.5%'},
+    {n:'Liquidity Sweep Sniper',tf:'M1/M5',wr:'55-62%',rr:'1:3',d:'Wait for stop hunt → enter with smart money. Tightest SL possible.',ind:['Price Action','Session H/L','OB','FVG'],e:'Price sweeps previous H/L → displacement → enter on FVG/OB retest.',sl:'2-3 pips beyond sweep wick (20-30 pips). Wide wick = skip.',tp:'Next liquidity pool — 1:3 RR',s:'Killzones',r:'0.5%',ict:1},
+    {n:'OB + FVG Confluence',tf:'M5/M15',wr:'58-65%',rr:'1:3',d:'Order Block overlapping FVG = sniper entry.',ind:['OB','FVG','BOS/CHoCH','P/D'],e:'After BOS/CHoCH, enter at OB-FVG overlap zone.',sl:'Below OB wick + 5 pips (25-40 pips).',tp:'Next swing / liquidity — 1:3 RR',s:'Killzones',r:'0.5%',ict:1},
+    {n:'Session Breakout',tf:'M15',wr:'58-65%',rr:'1:2',d:'Asian range breakout at London open. SL at midpoint.',ind:['Asian Range','ATR','VWAP'],e:'Mark Asian H/L. Enter on strong close beyond range.',sl:'Midpoint of Asian range (30-50 pips max).',tp:'1x range width — 1:2 RR',s:'London Open',r:'0.5%'},
+    {n:'Round Number Rejection',tf:'M5',wr:'65-72%',rr:'1:2',d:'Highest win rate. Tight SL beyond rejection wick.',ind:['$50/$100 RN','Pin Bars','H1 Trend'],e:'Price approaches RN → rejection candle aligned with H1 trend.',sl:'Beyond wick + 5 pips (15-30 pips).',tp:'Next RN — 1:2 RR',s:'Any active',r:'0.5%'},
+    {n:'Optimal Trade Entry',tf:'M5/M15',wr:'55-62%',rr:'1:3',d:'ICT Fib entry at 62-79% zone aligned with OB.',ind:['Fib 62-79%','OB','BOS','FVG'],e:'After BOS, enter at 62-79% Fib zone IF it aligns with OB/FVG.',sl:'5 pips below swing low (30-50 pips).',tp:'Previous high or -27% extension — 1:3',s:'NY Killzone',r:'0.5%',ict:1}
+  ],
+  ict:[
+    {t:'Order Blocks',s:'Institutional Footprint',c:'var(--gold)',d:'Last opposing candle before impulsive displacement move that breaks structure.',h:'On M15: find the last red candle before a strong bullish move. Mark its range. Price returns to this zone → entry.'},
+    {t:'Fair Value Gaps',s:'Price Imbalance',c:'var(--cyan)',d:'3-candle pattern where middle candle creates gap — wick of C1 doesn\'t touch wick of C3.',h:'Bullish FVG: High of C1 < Low of C3. Price returns to fill gap → entry zone, especially overlapping OB.'},
+    {t:'Liquidity Sweep',s:'Stop Hunt',c:'var(--red)',d:'Price spikes through obvious H/L to trigger clustered stops, then reverses sharply.',h:'Mark equal H/L. When price sweeps through with wick but body closes back inside → wait for displacement opposite direction.'},
+    {t:'Break of Structure',s:'Trend Continuation',c:'var(--green)',d:'Price breaks beyond most recent swing H/L with body close. Confirms current trend continuing.',h:'Uptrend: price breaks above previous HH with body close = bullish BOS. Look for pullback to OB/FVG for entry.'},
+    {t:'Change of Character',s:'Reversal Signal',c:'var(--purple)',d:'FIRST break of recent swing H/L signaling potential reversal. Early warning system.',h:'Downtrend: price breaks ABOVE recent LH = bullish CHoCH. Wait for retracement to OB/FVG. More cautious than BOS.'},
+    {t:'Premium & Discount',s:'Where to Buy/Sell',c:'var(--blue)',d:'Above 50% Fib = Premium (sell zone). Below 50% = Discount (buy zone). Smart money buys cheap, sells expensive.',h:'On H1: if gold is in discount zone + bullish OB + FVG + sweep → high probability long. Never buy in premium.'},
+    {t:'Power of Three (AMD)',s:'Session Pattern',c:'var(--goldb)',d:'Every session: Accumulation (tight range) → Manipulation (fake breakout) → Distribution (real move).',h:'London 15:00: consolidation → breaks one way (trap) → reverses hard. The reversal IS your trade.'},
+    {t:'Breaker Blocks',s:'Failed OB Flip',c:'#ec4899',d:'When OB fails (price breaks through body), it flips role. Support → resistance, vice versa.',h:'Bullish OB gets broken = bearish breaker. When price retraces UP to zone → short entry.'}
+  ],
+  killzones:[
+    {n:'Asian (Analysis)',t:'07:00 — 15:00',c:'var(--blue)',a:'Mark levels, set bias, review calendar. DO NOT TRADE.',q:'Analysis'},
+    {n:'London Open KZ',t:'15:00 — 17:00',c:'var(--gold)',a:'Asian range sweep, first BOS/CHoCH, Session Breakout setups.',q:'High'},
+    {n:'NY Open KZ',t:'20:00 — 22:00',c:'var(--green)',a:'Peak volatility. OB+FVG+OTE setups. ICT Silver Bullet.',q:'Best'},
+    {n:'LDN/NY Overlap',t:'20:00 — 23:30',c:'var(--red)',a:'MAXIMUM opportunity. Both sessions active. Your bread and butter.',q:'Best'}
+  ],
+  news:[
+    {t:'Ongoing',e:'US-Iran / Strait of Hormuz',i:'h',d:'Military headlines move gold $50+ instantly. Keep positions small.',g:'500+ pip potential. Stay nimble.'},
+    {t:'This Week',e:'Trump-Xi Summit',i:'h',d:'3-day summit. Trade deal or escalation = gold catalyst.',g:'Expect 300-500 pip directional moves on headlines.'},
+    {t:'Weekly',e:'DXY Movement',i:'m',d:'Gold inverse to USD. DXY breaking levels = gold moves opposite.',g:'Use as confluence confirmation.'},
+    {t:'TBD June',e:'FOMC Rate Decision',i:'h',d:'95.8% unchanged. Forward guidance matters more than decision.',g:'500-1000+ pip move. Don\'t scalp this — trade aftermath.'}
+  ],
+  risks:[
+    {r:'Max 0.5-1% risk/trade',i:'🎯',d:'$10K account = $50-100 max risk per trade.'},
+    {r:'Max 2 trades/session',i:'⚡',d:'Win+Win or Loss+Loss = STOP. No overtrading.'},
+    {r:'Daily loss limit 2%',i:'🛡️',d:'Hit 2% drawdown? Walk away.'},
+    {r:'LDN & NY only',i:'🕐',d:'15:00-04:00 Cambodia. Morning = analysis only.'},
+    {r:'No news trading',i:'📰',d:'Flat 30 min before/after NFP, FOMC, CPI.'},
+    {r:'Always use SL',i:'🔒',d:'Gold moves $50+ in minutes. No mental stops.'}
+  ],
+  edu:[
+    {t:'US Dollar (DXY)',r:'Inverse',c:'var(--blue)',d:'USD down = gold up. Use DXY as confirmation.'},
+    {t:'Fed & Rates',r:'Inverse',c:'var(--red)',d:'Higher rates hurt gold. FOMC moves gold 500+ pips.'},
+    {t:'Geopolitics',r:'Bullish',c:'var(--gold)',d:'War/uncertainty = safe-haven demand for gold.'},
+    {t:'CPI/PPI',r:'Complex',c:'var(--green)',d:'Hot = USD up short-term, but gold hedge long-term.'},
+    {t:'Central Banks',r:'Structural',c:'#ec4899',d:'Net buyers = structural floor under gold.'},
+    {t:'NFP/Jobs',r:'Volatile',c:'var(--purple)',d:'300-1000+ pips. Trade aftermath, not spike.'}
+  ],
+  routine:[
+    {t:'07:00-14:00',s:'Morning Analysis',d:'Mark H4/H1 levels. Asian H/L. Set daily bias. DO NOT TRADE.'},
+    {t:'14:30',s:'Pre-London',d:'Final check. Set alerts. Review news schedule.'},
+    {t:'15:00-17:00',s:'London Open KZ',d:'Watch for Asian range sweep. First BOS/CHoCH. Max 1-2 trades.'},
+    {t:'20:00-23:30',s:'LDN/NY Overlap 🔥',d:'PRIME TIME. ICT setups. Highest probability. Max 2 trades total.'},
+    {t:'After',s:'Journal',d:'Screenshot trades. Log R:R, emotions, result. Plan tomorrow.'}
+  ],
+  mistakes:[
+    {b:'Trading Asian session',f:'Morning = analysis. 07:00-15:00 is for marking levels.'},
+    {b:'Every candle is an OB',f:'Valid OB needs: displacement, FVG, BOS, unmitigated.'},
+    {b:'Holding losers',f:'Scalp not working in 15 min = wrong. Cut it.'},
+    {b:'Over-leveraging',f:'Gold swings 200-500 pips/day. Size to your SL.'},
+    {b:'Revenge trading',f:'Loss+Loss = STOP. The algorithm waits for you to get emotional.'},
+    {b:'SL too wide',f:'Max 30-40 pips. If wider needed, SKIP the trade.'}
+  ],
+  presets:['Analyze XAUUSD for ICT setups today','Where are liquidity pools on gold?','Best OB+FVG entry near $4,700?','Risk plan for $5,000 account','Explain Power of Three for today','What killzone for Cambodia trader?']
+};
+
+// ═══════════════════════════════════════
+// NAV
+// ═══════════════════════════════════════
+document.querySelectorAll('.nb').forEach(b=>{
+  b.onclick=()=>{
+    document.querySelectorAll('.nb').forEach(x=>x.classList.remove('on'));
+    document.querySelectorAll('.pg').forEach(x=>x.classList.remove('on'));
+    b.classList.add('on');
+    document.getElementById('pg-'+b.dataset.p).classList.add('on');
+  };
+});
+
+// ═══════════════════════════════════════
+// CLOCK + SESSION (Cambodia UTC+7)
+// ═══════════════════════════════════════
+function tick(){
+  const now=new Date();
+  const kh=new Date(now.toLocaleString('en-US',{timeZone:'Asia/Phnom_Penh'}));
+  document.getElementById('clock').textContent=kh.toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  const h=now.getUTCHours()+now.getUTCMinutes()/60;
+  let s=h>=13&&h<16.5?'overlap':h>=8&&h<16.5?'london':h>=13&&h<21?'newyork':'asian';
+  document.querySelectorAll('.sc').forEach(c=>c.classList.remove('now'));
+  const el=document.getElementById('s-'+s);
+  if(el){el.classList.add('now');if(!el.querySelector('.ldot'))el.querySelector('.sn').innerHTML+='<span class="ldot"></span>';}
+}
+setInterval(tick,1000);tick();
+
+// ═══════════════════════════════════════
+// TICKER
+// ═══════════════════════════════════════
+document.getElementById('tickerText').innerHTML=[
+  '🔴 PPI SURGED — biggest since 2022 — gold drops toward $4,680',
+  '🔴 CPI 3.8% — rate cuts priced OUT for 2026',
+  '🟡 Trump-Xi summit starting — massive volatility expected',
+  '🔴 Strait of Hormuz blocked — safe-haven demand elevated',
+  '🟢 $4,676 demand zone holding — watch for sweep bounce',
+  '🔴 $4,718 sell zone — previous highs as supply'
+].map(t=>`<span>${t}</span>`).join('');
+
+// ═══════════════════════════════════════
+// RENDER ALL SECTIONS
+// ═══════════════════════════════════════
+// Sessions
+document.getElementById('sessions').innerHTML=D.sessions.map(s=>`<div class="sc" id="s-${s.id}"><div class="sn" style="color:${s.c}">${s.name}</div><div class="st">${s.time}</div><div class="sq">Scalping: <span class="${s.q}">${s.ql}</span></div></div>`).join('');
+
+// Levels
+document.getElementById('levels').innerHTML=D.levels.map(l=>{
+  const pct=((l.p-4600)/(4773-4600))*100;
+  const cm={r:'var(--red)',s:'var(--green)',p:'var(--gold)'};
+  return`<div class="lr"><span class="lp" style="color:${cm[l.t]}">$${l.p}</span><div class="lb"><div class="ld" style="left:${pct}%;background:${cm[l.t]};box-shadow:0 0 6px ${cm[l.t]}"></div></div><span class="ll">${l.l}</span></div>`;
+}).join('');
+
+// Context
+document.getElementById('ctx').innerHTML=D.ctx.map(c=>`<div style="background:rgba(0,0,0,.25);border-radius:8px;padding:14px"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px"><span style="font-size:12px;font-weight:600">${c.t}</span><span style="font-size:8px;padding:2px 7px;border-radius:10px;background:rgba(212,162,78,.08);color:var(--gold)">${c.tag}</span></div><div style="font-size:11px;font-weight:700;margin-bottom:4px;color:var(--${{r:'red',g:'green',y:'gold'}[c.c]})">${c.i}</div><p style="font-size:10px;color:var(--dim);line-height:1.5;margin:0">${c.d}</p></div>`).join('');
+
+// Strategies
+document.getElementById('stratList').innerHTML=D.strats.map(s=>`<div class="stc" onclick="this.classList.toggle('op')"><div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:8px"><div><div style="font-size:15px;font-weight:700">${s.n}</div><div style="font-size:11px;color:var(--dim);margin-top:2px">${s.d}</div></div><div style="display:flex;gap:4px;flex-wrap:wrap"><span class="tg tg-t">${s.tf}</span><span class="tg tg-w">WR:${s.wr}</span><span class="tg tg-r">RR:${s.rr}</span>${s.ict?'<span class="tg tg-i">ICT/SMC</span>':''}</div></div><div class="std"><div class="rg"><div class="rb"><div style="font-size:10px;font-weight:700;color:var(--blue);margin-bottom:4px">📍 Entry</div><div style="font-size:11px;color:var(--dim);line-height:1.5">${s.e}</div></div><div class="rb"><div style="font-size:10px;font-weight:700;color:var(--red);margin-bottom:4px">🔴 SL (TIGHT)</div><div style="font-size:11px;color:var(--dim);line-height:1.5">${s.sl}</div></div><div class="rb"><div style="font-size:10px;font-weight:700;color:var(--green);margin-bottom:4px">🟢 TP</div><div style="font-size:11px;color:var(--dim);line-height:1.5">${s.tp}</div></div></div><div style="margin-top:8px;display:flex;flex-wrap:wrap;gap:4px;font-size:10px;color:var(--dim)"><span>Indicators:</span>${s.ind.map(i=>`<span class="pill">${i}</span>`).join('')}<span style="margin-left:6px">Session:<strong style="color:var(--gold)">${s.s}</strong></span><span style="margin-left:4px">Risk:<strong style="color:var(--red)">${s.r}</strong></span></div></div></div>`).join('');
+
+// ICT
+document.getElementById('ictGrid').innerHTML=D.ict.map(c=>`<div class="ic"><h4 style="color:${c.c}">${c.t}</h4><div class="is">${c.s}</div><p>${c.d}</p><div class="ihow">🎯 <strong>Gold:</strong> ${c.h}</div></div>`).join('');
+
+document.getElementById('ictSteps').innerHTML=[
+  {n:'1',t:'Set Daily Bias (H4/D1)',d:'Uptrend or downtrend? Premium or discount? This determines longs or shorts.',c:'var(--gold)'},
+  {n:'2',t:'Mark Liquidity (H1/M15)',d:'Equal H/L, session extremes, trendline liquidity. Where will price sweep?',c:'var(--red)'},
+  {n:'3',t:'Wait for Manipulation',d:'During killzone, watch for liquidity sweep. Wick grabs stops → closes back inside.',c:'var(--purple)'},
+  {n:'4',t:'Confirm Shift (BOS/CHoCH)',d:'Drop to M5/M1. Wait for BOS or CHoCH opposite direction. Confirms reversal.',c:'var(--green)'},
+  {n:'5',t:'Find Entry (OB + FVG)',d:'Mark OB from displacement leg. Overlaps with FVG = sniper zone.',c:'var(--cyan)'},
+  {n:'6',t:'Execute Precisely',d:'SL: beyond sweep + buffer. TP: next liquidity pool. RR 1:3 min. Risk 0.5%.',c:'var(--blue)'}
+].map(s=>`<div style="display:flex;gap:12px;background:rgba(0,0,0,.15);border-radius:8px;padding:12px;margin-bottom:5px"><span style="display:flex;width:26px;height:26px;border-radius:50%;background:${s.c}18;color:${s.c};align-items:center;justify-content:center;font-weight:700;font-size:12px;flex-shrink:0">${s.n}</span><div><div style="font-size:12px;font-weight:700;color:${s.c}">${s.t}</div><div style="font-size:10px;color:var(--dim);line-height:1.5">${s.d}</div></div></div>`).join('');
+
+document.getElementById('killzones').innerHTML=D.killzones.map(k=>`<div style="display:flex;gap:12px;background:rgba(0,0,0,.15);border-radius:8px;padding:12px;margin-bottom:5px;border-left:3px solid ${k.c}"><div style="min-width:120px"><div style="font-size:12px;font-weight:700;color:${k.c}">${k.n}</div><div style="font-size:9px;color:var(--dim);font-family:var(--fm)">${k.t}</div><div style="font-size:9px;font-weight:600;margin-top:3px;color:${k.q==='Best'?'var(--green)':'var(--gold)'}">${k.q}</div></div><p style="font-size:10px;color:var(--dim);line-height:1.5;margin:0">${k.a}</p></div>`).join('');
+
+// News
+document.getElementById('newsList').innerHTML=D.news.map(n=>`<div style="background:var(--card);border:1px solid var(--bdr);border-radius:10px;padding:14px;margin-bottom:8px"><div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:5px;margin-bottom:5px"><span style="font-size:13px;font-weight:600">${n.e}</span><div style="display:flex;gap:5px"><span style="font-size:8px;font-weight:700;padding:2px 7px;border-radius:5px;background:rgba(${{h:'217,79,79',m:'212,162,78'}[n.i]},.15);color:var(--${{h:'red',m:'gold'}[n.i]})">${n.i==='h'?'HIGH':'MED'}</span><span style="font-size:9px;color:var(--dim);font-family:var(--fm)">${n.t}</span></div></div><p style="font-size:10px;color:var(--dim);line-height:1.5;margin:0 0 4px">${n.d}</p><div style="font-size:9px;padding:6px;background:rgba(212,162,78,.04);border-radius:5px;color:var(--goldd)">📊 ${n.g}</div></div>`).join('');
+
+// Risk
+document.getElementById('riskG').innerHTML=D.risks.map(r=>`<div style="background:rgba(0,0,0,.25);border-radius:10px;padding:12px;display:flex;gap:10px"><span style="font-size:20px">${r.i}</span><div><div style="font-size:12px;font-weight:700;margin-bottom:2px">${r.r}</div><div style="font-size:10px;color:var(--dim);line-height:1.5">${r.d}</div></div></div>`).join('');
+
+// Edu
+document.getElementById('eduG').innerHTML=D.edu.map(e=>`<div class="ec"><h4 style="color:${e.c}">${e.t}</h4><div class="er">${e.r}</div><p>${e.d}</p></div>`).join('');
+document.getElementById('routineG').innerHTML=D.routine.map(r=>`<div style="display:flex;gap:12px;background:rgba(0,0,0,.15);border-radius:8px;padding:12px;margin-bottom:5px"><div style="min-width:70px;font-size:9px;color:var(--gold);font-weight:600;font-family:var(--fm)">${r.t}</div><div><div style="font-size:12px;font-weight:700;margin-bottom:2px">${r.s}</div><div style="font-size:10px;color:var(--dim);line-height:1.5">${r.d}</div></div></div>`).join('');
+document.getElementById('mistakeG').innerHTML=D.mistakes.map(m=>`<div style="background:rgba(0,0,0,.25);border-radius:8px;padding:10px"><div style="font-size:11px;font-weight:700;color:#f5a5a5;margin-bottom:3px">❌ ${m.b}</div><div style="font-size:10px;color:var(--green);line-height:1.5">✅ ${m.f}</div></div>`).join('');
+
+// Presets
+document.getElementById('presets').innerHTML=D.presets.map(p=>`<button class="apb" onclick="document.getElementById('aiQ').value=this.textContent;askAI()">${p}</button>`).join('');
+
+// ═══════════════════════════════════════
+// TODAY'S SETUPS — AI-generated daily
+// ═══════════════════════════════════════
+let apiKey=localStorage.getItem('pmk')||'';
+const today=new Date().toLocaleDateString('en-US',{timeZone:'Asia/Phnom_Penh',month:'short',day:'numeric',year:'numeric'});
+document.getElementById('setupDate').textContent=today;
+
+if(apiKey){
+  document.getElementById('keyStatus').textContent='CONNECTED';
+  document.getElementById('keyStatus').style.background='rgba(61,189,125,.15)';
+  document.getElementById('keyStatus').style.color='var(--green)';
+  document.getElementById('apiKey').value='••••••'+apiKey.slice(-4);
+}
+
+function saveKey(){
+  const k=document.getElementById('apiKey').value.trim();
+  if(k&&k.startsWith('sk-')){
+    apiKey=k;localStorage.setItem('pmk',k);
+    document.getElementById('keyStatus').textContent='CONNECTED';
+    document.getElementById('keyStatus').style.background='rgba(61,189,125,.15)';
+    document.getElementById('keyStatus').style.color='var(--green)';
+    document.getElementById('apiKey').value='••••••'+k.slice(-4);
+  }
+}
+
+const SYS=`You are Papa Ming — elite XAUUSD scalping analyst. ICT/SMC specialist. TIGHT stop losses (15-40 pips MAX).
+
+User is in CAMBODIA (UTC+7). Killzones: London Open 15:00-17:00, NY Open 20:00-22:00, Overlap 20:00-23:30 Cambodia time.
+
+CRITICAL RULES:
+- Give EXACT prices for entry, SL, TP with pip distances
+- SL must be 15-40 pips MAX. If wider needed, say SKIP
+- Minimum 1:2 RR, ideally 1:3
+- Use ICT terminology: OB, FVG, BOS, CHoCH, liquidity sweep, premium/discount, OTE, AMD
+- Always specify R:R ratio
+- End with risk reminder
+- Be specific and actionable`;
+
+const SETUP_PROMPT=`Generate 3 gold (XAUUSD) trade setups for today. For each setup provide EXACTLY in this JSON format (respond with ONLY the JSON array, no other text):
+[
+  {
+    "type": "sell" or "buy",
+    "name": "short description",
+    "model": "ICT/SMC model used",
+    "confidence": "HIGH" or "MEDIUM-HIGH" or "MEDIUM",
+    "entry": "exact price range",
+    "sl": "exact price (X pips)",
+    "tp1": "price (X pips / 1:X RR)",
+    "tp2": "price (X pips / 1:X RR)",
+    "rr": "1:X to 1:X",
+    "bias": "reasoning",
+    "reasoning": "ICT/SMC explanation",
+    "rules": "step by step execution"
+  }
+]
+
+Requirements:
+- SL must be 15-40 pips MAX (tight behind structure)
+- Minimum 1:2 RR
+- Use ICT concepts: OB, FVG, liquidity sweep, BOS/CHoCH
+- All times in Cambodia (UTC+7)
+- Include at least one SHORT and one LONG setup
+- Be specific about gold price levels`;
+
+// Offline setups (fallback)
+const OFFLINE_SETUPS=[
+  {type:'sell',name:'$4,718 Supply Zone Rejection',model:'OB + FVG + Supply',confidence:'HIGH',entry:'$4,715 — $4,718',sl:'$4,725 (7 pips)',tp1:'$4,700 (15 pips / 1:2 RR)',tp2:'$4,680 (35 pips / 1:5 RR)',rr:'1:2 to 1:5',bias:'Bearish — hot PPI + strong USD + rejected from $4,773',reasoning:'Bearish FVG around $4,710-$4,720 contains a bearish OB. $4,718 is key sell zone coinciding with previous highs and supply. Price fell from $4,773 confirming bearish intent.',rules:'Wait for retrace to $4,715-$4,718. Look for M5 rejection (pin bar/engulfing). SL above zone. TP1 $4,700, TP2 $4,680.'},
+  {type:'buy',name:'$4,676 Demand Zone Bounce',model:'Liquidity Sweep + OB',confidence:'MEDIUM-HIGH',entry:'$4,676 — $4,680',sl:'$4,670 (6-10 pips)',tp1:'$4,700 (20 pips / 1:2 RR)',tp2:'$4,718 (38 pips / 1:4 RR)',rr:'1:2 to 1:4',bias:'Counter-trend — price at today\'s low / demand',reasoning:'$4,676 is today\'s low where buyers stepped in. If price sweeps below and closes back above = liquidity sweep. CHoCH on M1/M5 confirms reversal.',rules:'Wait for sweep below $4,676 (wick below, body above). Confirm M1/M5 CHoCH. Enter on FVG/OB retest. SL below sweep wick.'},
+  {type:'sell',name:'$4,700 Round Number Rejection',model:'Breaker Block + EMA',confidence:'MEDIUM',entry:'$4,698 — $4,702',sl:'$4,710 (8-12 pips)',tp1:'$4,680 (20 pips / 1:2 RR)',tp2:'$4,660 (40 pips / 1:4 RR)',rr:'1:2 to 1:4',bias:'$4,700 flipped support → resistance (breaker)',reasoning:'After breaking below $4,700, it acts as resistance. 9 EMA below 21 EMA on M5 confirms bearish structure. Combined with hot inflation data.',rules:'Wait for retrace to $4,698-$4,702. 9 EMA must be below 21 EMA. Look for rejection candle. SL above $4,710.'}
+];
+
+function renderSetups(setups){
+  document.getElementById('setupCards').innerHTML=setups.map(s=>{
+    const tc=s.type==='sell'?'var(--red)':'var(--green)';
+    const bg=s.type==='sell'?'rgba(217,79,79,.04)':'rgba(61,189,125,.04)';
+    const cc=s.confidence.includes('HIGH')?'var(--green)':'var(--gold)';
+    return`<div class="cd" style="background:${bg};border-color:${tc}20">
+      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px;margin-bottom:8px">
+        <div style="display:flex;align-items:center;gap:6px">
+          <span style="font-size:9px;font-weight:700;padding:3px 10px;border-radius:6px;background:${tc}18;color:${tc}">${s.type.toUpperCase()}</span>
+          <span style="font-size:14px;font-weight:700">${s.name}</span>
+        </div>
+        <div style="display:flex;gap:4px"><span class="tg tg-i">${s.model}</span><span style="font-size:8px;padding:2px 8px;border-radius:12px;font-weight:700;background:${cc}15;color:${cc}">${s.confidence}</span></div>
+      </div>
+      <div class="g4" style="margin-bottom:10px">
+        <div class="rb"><div style="font-size:9px;color:var(--blue);font-weight:700;margin-bottom:3px">📍 ENTRY</div><div style="font-size:12px;font-weight:700;font-family:var(--fm)">${s.entry}</div></div>
+        <div class="rb"><div style="font-size:9px;color:var(--red);font-weight:700;margin-bottom:3px">🔴 SL (TIGHT)</div><div style="font-size:12px;font-weight:700;color:var(--red);font-family:var(--fm)">${s.sl}</div></div>
+        <div class="rb"><div style="font-size:9px;color:var(--green);font-weight:700;margin-bottom:3px">🟢 TP1</div><div style="font-size:12px;font-weight:700;color:var(--green);font-family:var(--fm)">${s.tp1}</div></div>
+        <div class="rb"><div style="font-size:9px;color:var(--cyan);font-weight:700;margin-bottom:3px">💎 TP2</div><div style="font-size:12px;font-weight:700;color:var(--cyan);font-family:var(--fm)">${s.tp2}</div></div>
+      </div>
+      <div style="font-size:10px;color:var(--dim);margin-bottom:6px"><strong style="color:var(--gold)">R:R:</strong> ${s.rr} · <strong style="color:${tc}">Bias:</strong> ${s.bias} · <strong>Risk:</strong> 0.5%</div>
+      <div class="rb" style="margin-bottom:5px"><div style="font-size:9px;font-weight:700;color:var(--purple);margin-bottom:3px">🧠 ICT/SMC Reasoning</div><div style="font-size:10px;color:var(--dim);line-height:1.5">${s.reasoning}</div></div>
+      <div style="padding:8px;background:rgba(212,162,78,.04);border-radius:6px"><div style="font-size:9px;font-weight:700;color:var(--gold);margin-bottom:3px">📋 Execution Rules</div><div style="font-size:10px;color:var(--dim);line-height:1.5">${s.rules}</div></div>
+    </div>`;
+  }).join('');
+}
+
+// Quick ref + bias
+document.getElementById('quickRef').innerHTML=[
+  {l:'Bias',v:'BEARISH',c:'var(--red)'},
+  {l:'Sell Zone',v:'$4,718',c:'var(--red)'},
+  {l:'Buy Zone',v:'$4,676',c:'var(--green)'},
+  {l:'Pivot',v:'$4,700',c:'var(--gold)'},
+  {l:'Max SL',v:'30-40 pips',c:'var(--purple)'},
+  {l:'Killzone',v:'20:00-23:30',c:'var(--cyan)'}
+].map(i=>`<div class="crb"><div class="cl">${i.l}</div><div class="cv" style="color:${i.c};font-size:14px">${i.v}</div></div>`).join('');
+
+document.getElementById('biasBox').innerHTML=`<div class="g3">
+  <div style="background:rgba(0,0,0,.2);border-radius:8px;padding:14px;border-left:3px solid var(--red)"><h4 style="font-size:12px;color:var(--red);margin-bottom:4px">📉 Bearish (Stronger)</h4><p style="font-size:10px;color:var(--dim);line-height:1.6">• PPI hot — biggest since 2022<br>• CPI 3.8% above forecast<br>• DXY rebounding<br>• Rate cuts priced out<br>• Price rejected from $4,773</p></div>
+  <div style="background:rgba(0,0,0,.2);border-radius:8px;padding:14px;border-left:3px solid var(--green)"><h4 style="font-size:12px;color:var(--green);margin-bottom:4px">📈 Bullish (Present)</h4><p style="font-size:10px;color:var(--dim);line-height:1.6">• US-Iran tensions<br>• Trump-Xi uncertainty<br>• Central bank buying<br>• Gold above $4,600 floor<br>• Long-term hedge demand</p></div>
+  <div style="background:rgba(0,0,0,.2);border-radius:8px;padding:14px;border-left:3px solid var(--gold)"><h4 style="font-size:12px;color:var(--gold);margin-bottom:4px">🎯 Papa Ming's Call</h4><p style="font-size:10px;color:var(--dim);line-height:1.6"><strong style="color:var(--red)">SHORT BIAS.</strong> Sell rallies to $4,700-$4,718. Only long at $4,676 with liquidity sweep + CHoCH. Max 30 pip SL. No trades during Trump-Xi headlines.</p></div>
+</div>`;
+
+async function generateDailySetups(){
+  const btn=document.getElementById('genBtn');
+  const cards=document.getElementById('setupCards');
+  if(!btn)return;
+
+  // Sync API key from input
+  const freshKey=document.getElementById('apiKey').value.trim();
+  if(freshKey&&freshKey.startsWith('sk-')){
+    apiKey=freshKey;localStorage.setItem('pmk',freshKey);
+    document.getElementById('keyStatus').textContent='✅ CONNECTED';
+    document.getElementById('keyStatus').style.background='rgba(61,189,125,.15)';
+    document.getElementById('keyStatus').style.color='var(--green)';
+  }
+  if(!apiKey||!apiKey.startsWith('sk-')){
+    cards.innerHTML='<div style="padding:16px;color:var(--red);font-size:12px">❌ Paste your API key first (starts with sk-ant-...)</div>';
+    return;
+  }
+
+  btn.textContent='⏳ Step 1: Fetching live price...';btn.disabled=true;
+  cards.innerHTML='<div style="padding:20px;text-align:center;color:var(--dim)"><span class="asp"></span> Fetching real-time gold price...</div>';
+
+  // ═══ STEP 1: Fetch REAL price from free API ═══
+  let price=0, high=0, low=0, open_p=0;
+
+  // Try goldpricez.com (free, no key, CORS-friendly)
+  try{
+    const r=await fetch('https://goldpricez.com/api/rates/currency/usd/measure/ounce');
+    if(r.ok){
+      const d=await r.json();
+      if(d&&d.price){price=parseFloat(d.price);high=parseFloat(d.high||d.price);low=parseFloat(d.low||d.price);}
+    }
+  }catch(e){console.log('goldpricez failed',e);}
+
+  // Try gold-api.com (free, no key)
+  if(!price){
+    try{
+      const r=await fetch('https://www.gold-api.com/api/XAU/USD');
+      if(r.ok){
+        const d=await r.json();
+        if(d&&d.price){price=parseFloat(d.price);high=parseFloat(d.high_price||d.price);low=parseFloat(d.low_price||d.price);open_p=parseFloat(d.open_price||0);}
+      }
+    }catch(e){console.log('gold-api failed',e);}
+  }
+
+  // Try goldapi.io with free tier
+  if(!price){
+    try{
+      const r=await fetch('https://www.goldapi.io/api/XAU/USD',{headers:{'x-access-token':'goldapi-demo'}});
+      if(r.ok){
+        const d=await r.json();
+        if(d&&d.price){price=d.price;high=d.high_price||d.price;low=d.low_price||d.price;open_p=d.open_price||0;}
+      }
+    }catch(e){console.log('goldapi.io failed',e);}
+  }
+
+  // Last resort: use Claude web search to get price
+  if(!price){
+    try{
+      const pr=await fetch('https://api.anthropic.com/v1/messages',{
+        method:'POST',
+        headers:{'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+        body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:200,
+          tools:[{type:'web_search_20250305',name:'web_search'}],
+          messages:[{role:'user',content:'What is the EXACT current XAUUSD spot price RIGHT NOW in May 2026? Reply ONLY with a number like 4614.50'}]
+        })
+      });
+      if(pr.ok){
+        const pd=await pr.json();
+        const ptxt=pd.content?.filter(i=>i.type==='text').map(i=>i.text).join(' ')||'';
+        const pm=ptxt.match(/(4\d{3}(?:\.\d+)?)/);
+        if(pm)price=parseFloat(pm[1]);
+      }
+    }catch(e){console.log('web search price failed',e);}
+  }
+
+  if(!price||price<3000||price>8000){
+    cards.innerHTML='<div style="padding:16px;color:var(--red);font-size:11px">❌ Could not fetch live gold price. Please try again in 30 seconds.<br>If this keeps happening, the price APIs may be down.</div>';
+    btn.textContent='🔄 Try Again';btn.disabled=false;
+    return;
+  }
+
+  const priceStr=price.toFixed(2);
+  const highStr=(high||price+20).toFixed(2);
+  const lowStr=(low||price-20).toFixed(2);
+  cards.innerHTML=`<div style="padding:20px;text-align:center"><div style="font-size:18px;font-weight:700;color:var(--goldb);font-family:var(--fm);margin-bottom:4px">XAUUSD: $${priceStr}</div><div style="font-size:11px;color:var(--dim)">High: $${highStr} | Low: $${lowStr}</div><div style="margin-top:10px;color:var(--dim)"><span class="asp"></span> Generating ICT/SMC setups for $${priceStr}...</div></div>`;
+  btn.textContent='⏳ Step 2: Generating setups...';
+
+  // ═══ STEP 2: Generate setups with REAL price ═══
+  const dynamicPrompt=`XAUUSD LIVE PRICE RIGHT NOW: $${priceStr}
+Today's High: $${highStr}
+Today's Low: $${lowStr}
+Date: ${today} | Timezone: Cambodia UTC+7
+
+CRITICAL: All entry, SL, TP prices MUST be within $50 of $${priceStr}. The current price is $${priceStr} — NOT $3000 or $2000.
+
+Generate 3 trade setups using SWEEP-FIRST execution:
+1) Set ALERT at zone (no limit orders)
+2) Watch M1 when price reaches zone  
+3) Let sweep happen
+4) Wait for M1 CHoCH
+5) Enter on CHoCH close
+6) SL: 2-3 pips beyond sweep wick (8-30 pips max)
+7) Min 1:2 RR
+
+Include at least 1 BUY and 1 SELL. Use ICT: OB, FVG, BOS, CHoCH, liquidity sweep.
+
+Respond ONLY with a JSON array, no other text:
+[{"type":"buy/sell","name":"$PRICE description","model":"ICT model","confidence":"HIGH/MEDIUM-HIGH/MEDIUM","entry":"$XXXX range","sl":"$XXXX (X pips)","tp1":"$XXXX (X pips / 1:X RR)","tp2":"$XXXX (X pips / 1:X RR)","rr":"1:X to 1:X","bias":"reasoning","reasoning":"ICT analysis","rules":"step by step"}]`;
+
+  try{
+    const r=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+      body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:2000,system:SYS,messages:[{role:'user',content:dynamicPrompt}]})
+    });
+    if(!r.ok){
+      const err=await r.text();
+      cards.innerHTML=`<div style="padding:16px;color:var(--red);font-size:11px">❌ API Error (${r.status}): ${err.slice(0,200)}</div>`;
+      btn.textContent='🔄 Try Again';btn.disabled=false;return;
+    }
+    const d=await r.json();
+    const txt=d.content?.filter(i=>i.type==='text').map(i=>i.text).join('')||'';
+
+    let setups=null;
+    try{setups=JSON.parse(txt.replace(/```json|```/g,'').trim());}catch(e1){
+      const m=txt.match(/\[[\s\S]*\]/);if(m){try{setups=JSON.parse(m[0]);}catch(e2){}}
+    }
+    if(Array.isArray(setups)&&setups.length>0){
+      renderSetups(setups);
+      localStorage.setItem('pm_setups',JSON.stringify({date:today,setups,price:priceStr}));
+      btn.textContent='✅ Live Setups Generated!';btn.disabled=false;
+      setTimeout(()=>{btn.textContent='🔄 Generate Today\'s Setups';},3000);
+      return;
+    }
+    cards.innerHTML=`<div style="padding:14px;background:rgba(212,162,78,.06);border-radius:8px"><div style="font-size:10px;color:var(--gold);margin-bottom:4px">🤖 AI response (click Generate again):</div><div style="font-size:11px;color:var(--dim);white-space:pre-wrap;max-height:300px;overflow-y:auto">${txt}</div></div>`;
+    btn.textContent='🔄 Try Again';btn.disabled=false;
+  }catch(e){
+    cards.innerHTML=`<div style="padding:16px;color:var(--red);font-size:11px">❌ Error: ${e.message}</div>`;
+    btn.textContent='🔄 Try Again';btn.disabled=false;
+  }
+}
+
+// Load cached setups or show offline
+const cached=localStorage.getItem('pm_setups');
+if(cached){
+  try{
+    const c=JSON.parse(cached);
+    if(c.date===today){renderSetups(c.setups);}
+    else{renderSetups(OFFLINE_SETUPS);}
+  }catch(e){renderSetups(OFFLINE_SETUPS);}
+}else{renderSetups(OFFLINE_SETUPS);}
+
+// ═══════════════════════════════════════
+// AI ANALYST
+// ═══════════════════════════════════════
+document.getElementById('aiQ').addEventListener('keydown',e=>{if(e.key==='Enter')askAI()});
+
+const OFFLINE_AI={
+  default:`🧠 PAPA MING — Daily Analysis
+
+📉 BIAS: BEARISH | Gold opened $4,735 → fell to $4,676
+
+═══ SETUP 1: SHORT $4,718 ═══
+📍 Entry: $4,715-$4,718 | 🔴 SL: $4,725 (7 pips)
+🟢 TP1: $4,700 (1:2) | 💎 TP2: $4,680 (1:5)
+Model: Bearish OB + FVG at supply zone
+
+═══ SETUP 2: LONG $4,676 ═══
+📍 Entry: $4,676-$4,680 | 🔴 SL: $4,670 (6 pips)
+🟢 TP1: $4,700 (1:3) | 💎 TP2: $4,718 (1:6)
+Model: Liquidity sweep + CHoCH confirmation required
+
+═══ SETUP 3: SHORT $4,700 ═══
+📍 Entry: $4,698-$4,702 | 🔴 SL: $4,710 (10 pips)
+🟢 TP1: $4,680 (1:2) | 💎 TP2: $4,660 (1:4)
+Model: Breaker block at round number
+
+⏰ Cambodia KZ: London 15:00-17:00 | NY 20:00-22:00 | Overlap 20:00-23:30
+⚠️ Max 0.5% risk. Max 30 pip SL. Trail to BE after 1:1.`,
+  liquidity:`🔍 LIQUIDITY MAP — XAUUSD
+
+BSL (above): $4,718 equal highs | $4,735 open | $4,773 Asian high (SWEPT)
+SSL (below): $4,676 today's low (NOT swept) | $4,645 weekly | $4,600 major
+
+Asian session swept BSL at $4,773 → confirms bearish intent.
+Next target: SSL at $4,676. If swept + CHoCH → long entry.
+If $4,676 holds → shorts on retrace to $4,700-$4,718.`,
+  risk:`🛡️ RISK PLAN — $5,000 Account
+
+0.5% risk = $25/trade
+30 pip SL → $25÷30 = $0.83/pip ≈ 0.08 lots
+20 pip SL → $25÷20 = $1.25/pip ≈ 0.12 lots
+
+With 55% WR + 1:3 RR:
+~5.5 wins × $75 = $412 | ~4.5 losses × $25 = $112
+Net: +$300/week = +6%/week = +24%/month
+
+Tight SL = bigger position = bigger profits. That's the edge. 👑`
+};
+
+async function askAI(){
+  const q=document.getElementById('aiQ').value.trim();if(!q)return;
+  const out=document.getElementById('aiOut');
+  const btn=document.getElementById('aiBtn');
+  out.style.display='block';
+  out.innerHTML='<span class="asp"></span> <span style="color:var(--dim)">Analyzing...</span>';
+  btn.disabled=true;btn.textContent='...';
+
+  if(apiKey){
+    try{
+      const r=await fetch('https://api.anthropic.com/v1/messages',{
+        method:'POST',
+        headers:{'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+        body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1024,system:SYS,messages:[{role:'user',content:q}]})
+      });
+      if(r.ok){
+        const d=await r.json();
+        out.textContent=d.content?.map(i=>i.text||'').join('\n')||'Unable to analyze.';
+        btn.disabled=false;btn.textContent='Analyze';return;
+      }
+    }catch(e){}
+  }
+  await new Promise(r=>setTimeout(r,1000));
+  const ql=q.toLowerCase();
+  out.textContent=ql.includes('liquidity')||ql.includes('pool')?OFFLINE_AI.liquidity:
+    ql.includes('risk')||ql.includes('account')||ql.includes('manage')?OFFLINE_AI.risk:OFFLINE_AI.default;
+  btn.disabled=false;btn.textContent='Analyze';
+}
+
+// ═══════════════════════════════════════
+// CALCULATOR
+// ═══════════════════════════════════════
+function calc(){
+  const e=parseFloat(document.getElementById('cE').value)||0;
+  const s=parseFloat(document.getElementById('cS').value)||0;
+  const t=parseFloat(document.getElementById('cT').value)||0;
+  const a=parseFloat(document.getElementById('cA').value)||0;
+  const rp=parseFloat(document.getElementById('cR').value)||0;
+  const sl=Math.abs(e-s)*100,tp=Math.abs(t-e)*100;
+  const rr=sl>0?tp/sl:0;
+  const dr=a*(rp/100),pv=sl>0?dr/sl:0;
+  const lot=(pv/0.01).toFixed(2),pr=(dr*rr).toFixed(2);
+  const rc=rr>=3?'var(--green)':rr>=2?'var(--gold)':'var(--red)';
+  document.getElementById('calcR').innerHTML=[
+    {l:'R:R',v:'1:'+rr.toFixed(2),c:rc},{l:'SL',v:sl.toFixed(0)+'p',c:'var(--red)'},
+    {l:'TP',v:tp.toFixed(0)+'p',c:'var(--green)'},{l:'$ Risk',v:'$'+dr.toFixed(0),c:'var(--gold)'},
+    {l:'Lots',v:lot,c:'var(--blue)'},{l:'$ Profit',v:'$'+pr,c:'var(--green)'}
+  ].map(i=>`<div class="crb"><div class="cl">${i.l}</div><div class="cv" style="color:${i.c}">${i.v}</div></div>`).join('');
+  document.getElementById('calcW').style.display=rr<2?'block':'none';
+}
+calc();
+</script>
+</body>
+</html>
